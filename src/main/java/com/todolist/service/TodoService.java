@@ -1,8 +1,10 @@
 package com.todolist.service;
 
 import com.todolist.dto.Todo;
+import com.todolist.repository.TodoRepository;
 import jakarta.validation.Valid;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -14,13 +16,7 @@ public class TodoService {
     private static List<Todo> todos = new ArrayList<>();
 
     private static int todosCount = 0;
-
-    static {
-        todos.add(new Todo(++todosCount,"mali","grab some milk",
-                LocalDate.now().plusYears(1),false));
-        todos.add(new Todo(++todosCount,"ömer","watch supernatural",
-                LocalDate.now().plusYears(2),false));
-    }
+    private TodoRepository todoRepository;
 
     public List<Todo> findByUsername(String username){
         Predicate<? super Todo> predicate = todo -> todo.getUsername().equalsIgnoreCase(username);
@@ -32,11 +28,16 @@ public class TodoService {
         todos.add(todo);
     }
 
-    public void deleteById(int id){
+    public void deleteById(int id) {
         // todo.getId() == id
         // todo -> todo.getId() == id
         Predicate<? super Todo> predicate = todo -> todo.getId() == id;
         todos.removeIf(predicate);
+    }
+
+    @Transactional
+    public void markAsCompleted(int id) {
+        todoRepository.markAsCompleted(id);
     }
 
     public Todo findById(int id) {

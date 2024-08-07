@@ -1,5 +1,6 @@
 package com.todolist.config;
 
+import org.hibernate.dialect.MySQLDialect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.Customizer;
@@ -36,6 +37,7 @@ public class SpringSecurityConfiguration {
                 .build();
         return userDetails;
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder(){

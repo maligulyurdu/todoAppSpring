@@ -13,11 +13,9 @@ import org.springframework.web.bind.annotation.SessionAttributes;
 @SessionAttributes("name")
 public class WelcomeController {
 
-    Logger logger = LoggerFactory.getLogger(getClass());
     @GetMapping("/")
     public String goToLWelcomePage(ModelMap model) {
         model.put("name",getLoggedInUsername());
-        logger.warn("GIRIS YAPAN: {}",getLoggedInUsername());
         return "welcome"; //
         // login.jsp
 

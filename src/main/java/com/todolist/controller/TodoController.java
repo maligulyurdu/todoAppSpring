@@ -1,7 +1,7 @@
 package com.todolist.controller;
 
 import com.todolist.dto.Todo;
-import com.todolist.service.TodoService;
+import com.todolist.repository.TodoRepository;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,26 +11,28 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.HtmlUtils;
 
 import java.time.LocalDate;
 import java.util.List;
 
-//@Controller
+@Controller
 @SessionAttributes("name")
 public class TodoController {
 
-    private TodoService todoService;
 
-    public TodoController(TodoService todoService) {
-        this.todoService = todoService;
+    public TodoController(TodoRepository todoRepository) {
+        super();
+        this.todoRepository = todoRepository;
     }
 
-    private Logger logger = LoggerFactory.getLogger(getClass());
+    private TodoRepository todoRepository;
+
+
     @RequestMapping("list-todos")
     public String listAllTodos(ModelMap model) {
         String username = getLoggedInUsername(model);
-        List<Todo> todos = todoService.findByUsername(username);
-        logger.warn("expected list: {}",todos);
+        List<Todo> todos = todoRepository.findByUsername(username);
         model.addAttribute("todos", todos);
         return "listTodos";
     }
@@ -47,28 +49,35 @@ public class TodoController {
 
     @PostMapping("add-todo")
     public String addNewTodo(ModelMap model, @Valid Todo todo, BindingResult result){
-        logger.debug("DENEME DENEME add todo");
+
         if(result.hasErrors()){
             return "todo";
         }
         String username = getLoggedInUsername(model);
-        todoService.addTodo(username,todo.getDescription(), // for security, we use t/odo.getDescription instead of description.
-                LocalDate.now().plusYears(1),false);
+        todo.setUsername(username);
+        todo.setDescription(HtmlUtils.htmlEscape(todo.getDescription())); // escape js injection
+        todoRepository.save(todo);
         return "redirect:list-todos"; // instead of copy RequestMapping("list-todos") method
     }
 
     @RequestMapping("delete-todo")
     public String deleteTodo(@RequestParam int id){
         // Delete todo
-
-        todoService.deleteById(id);
+        todoRepository.deleteById(id);
         return "redirect:list-todos";
-
     }
+    @RequestMapping("mark-todo")
+    public String markTodo(@RequestParam int id){
+        todoRepository.markAsCompleted(id);
+        return "redirect:list-todos";
+    }
+
+
+
 
     @GetMapping("update-todo")
     public String showUpdateTodoPage(@RequestParam int id, ModelMap model){
-        Todo todo = todoService.findById(id);
+        Todo todo = todoRepository.findById(id).get();
 
         // it must be matched with modelAttribute in todo.jsp file
         model.addAttribute("todo",todo);
@@ -84,7 +93,9 @@ public class TodoController {
             return "todo";
         }
         String username = getLoggedInUsername(model);
-        todoService.updateTodo(todo);
+        todo.setUsername(username);
+        todo.setDescription(HtmlUtils.htmlEscape(todo.getDescription()));
+        todoRepository.save(todo);
         return "redirect:list-todos"; // instead of copy RequestMapping("list-todos") method
     }
 
